@@ -50,7 +50,7 @@ Express server ──► Claude agent loop (claude-opus-5-5, tool use, adaptive 
 **Requirements:** Node.js 18.17+ and an [Anthropic API key](https://console.anthropic.com/).
 
 ```bash
-git clone <your-repo-url> paypilot
+git clone https://github.com/Rsk0110/paypilot.git
 cd paypilot
 npm install
 cp .env.example .env      # then edit .env
