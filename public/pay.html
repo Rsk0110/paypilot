@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Checkout</title>
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body class="pay-body">
+  <main class="pay-card">
+    <div class="brand"><span class="logo">P</span><strong id="biz">PayPilot</strong></div>
+    <h1 id="desc">Loading…</h1>
+    <p class="pay-total" id="amount"></p>
+    <div id="status"></div>
+    <div id="paypal-buttons"></div>
+    <p class="muted small" id="foot">Secured by PayPal · Sandbox - no real money moves.</p>
+  </main>
+
+  <script>
+    const orderId = decodeURIComponent(location.pathname.split("/").pop());
+    const $ = (s) => document.querySelector(s);
+    const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
+
+    function showPaid(order) {
+      $("#paypal-buttons").innerHTML = "";
+      $("#status").innerHTML = `<div class="paid">✅ Paid${order.payer_email ? ` by ${esc(order.payer_email)}` : ""}<br><span class="small muted">Capture ID ${esc(order.capture_id || "")}</span></div>`;
+    }
+
+    async function capture() {
+      const res = await fetch(`/api/orders/${encodeURIComponent(orderId)}/capture`, { method: "POST" });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+      showPaid(data);
+    }
+
+    function loadScript(src) {
+      return new Promise((resolve, reject) => {
+        const s = document.createElement("script");
+        s.src = src; s.onload = resolve; s.onerror = reject;
+        document.head.appendChild(s);
+      });
+    }
+
+    (async () => {
+      const [cfg, orderRes] = await Promise.all([
+        fetch("/api/config").then((r) => r.json()),
+        fetch(`/api/orders/${encodeURIComponent(orderId)}`),
+      ]);
+      $("#biz").textContent = cfg.businessName;
+      document.title = `Pay ${cfg.businessName}`;
+      const order = await orderRes.json();
+      if (!orderRes.ok) {
+        $("#desc").textContent = "Payment link not found";
+        $("#status").innerHTML = `<p class="muted">${esc(order.error)}</p>`;
+        return;
+      }
+      $("#desc").textContent = order.description || "Payment";
+      $("#amount").innerHTML = `<b>${esc(order.amount)} ${esc(order.currency)}</b>`;
+      if (new URLSearchParams(location.search).get("cancelled")) {
+        $("#status").innerHTML = `<p class="muted">Payment was cancelled. You can try again below.</p>`;
+      }
+      if (order.status === "COMPLETED") return showPaid(order);
+      if (order.status === "APPROVED") return capture().catch((e) => ($("#status").textContent = e.message));
+
+      if (cfg.mode === "mock") {
+        $("#foot").textContent = "Mock mode - payments are simulated.";
+        const btn = document.createElement("button");
+        btn.className = "btn primary wide";
+        btn.textContent = "Simulate PayPal payment";
+        btn.onclick = () => capture().catch((e) => ($("#status").textContent = e.message));
+        $("#paypal-buttons").appendChild(btn);
+        return;
+      }
+
+      await loadScript(`https://www.paypal.com/sdk/js?client-id=${encodeURIComponent(cfg.paypalClientId)}&currency=${encodeURIComponent(order.currency || "USD")}&intent=capture`);
+      paypal.Buttons({
+        style: { layout: "vertical", shape: "pill" },
+        createOrder: () => orderId,
+        onApprove: () => capture().catch((e) => ($("#status").textContent = e.message)),
+        onError: (err) => ($("#status").textContent = "PayPal error: " + (err?.message || err)),
+      }).render("#paypal-buttons");
+    })();
+  </script>
+</body>
+</html>

@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>PayPilot - AI back-office for PayPal</title>
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <span class="logo">P</span>
+      <div>
+        <strong>PayPilot</strong>
+        <span class="muted small" id="biz"></span>
+      </div>
+    </div>
+    <div class="topbar-right">
+      <span class="badge" id="mode">…</span>
+      <button class="btn ghost" id="reset" title="Start a new conversation">New chat</button>
+    </div>
+  </header>
+
+  <div id="warning" class="warning" hidden></div>
+
+  <main class="layout">
+    <section class="chat">
+      <div id="messages" class="messages">
+        <div class="welcome">
+          <h2>Hi! I run your PayPal back-office.</h2>
+          <p class="muted">Tell me who to bill, what to collect, or ask how business is going. I'll ask before sending anything or moving money.</p>
+          <div class="suggestions">
+            <button class="chip">Invoice jane@example.com $1,200 for a website redesign and $300 for hosting setup</button>
+            <button class="chip">Make a $49 payment link for a 1-hour consulting call</button>
+            <button class="chip">Which invoices are still unpaid? Remind anyone overdue.</button>
+            <button class="chip">How is business this month?</button>
+            <button class="chip">Refund the most recent payment</button>
+          </div>
+        </div>
+      </div>
+      <form id="composer" class="composer">
+        <textarea id="input" rows="1" placeholder="e.g. Bill Sam Lee (sam@example.com) $750 for 3 product photos, due in 15 days" autocomplete="off"></textarea>
+        <button class="btn primary" id="send" type="submit">Send</button>
+      </form>
+    </section>
+
+    <aside class="side">
+      <div class="stats">
+        <div class="stat"><span class="muted small">Collected</span><b id="s-collected">$0</b></div>
+        <div class="stat"><span class="muted small">Outstanding</span><b id="s-outstanding">$0</b></div>
+        <div class="stat"><span class="muted small">Refunded</span><b id="s-refunded">$0</b></div>
+        <div class="stat"><span class="muted small">Net</span><b id="s-net">$0</b></div>
+      </div>
+      <h3>Activity</h3>
+      <ul id="activity" class="activity"><li class="muted small">No activity yet.</li></ul>
+    </aside>
+  </main>
+
+  <script src="/app.js"></script>
+</body>
+</html>
